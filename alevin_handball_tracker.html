@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Handball Alevín Tracker Alicante</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="Handball Alevín">
+  <meta name="description" content="Gestor offline de partidos de balonmano alevín para delegados en Alicante.">
+
+  <!-- Manifest Inline Data URI -->
+  <link rel="manifest" id="manifest-placeholder">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    /* Custom Touch Optimizations */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      touch-action: manipulation;
+    }
+    .touch-btn {
+      transition: transform 0.05s ease, filter 0.1s ease;
+    }
+    .touch-btn:active {
+      transform: scale(0.96);
+      filter: brightness(1.15);
+    }
+    /* Scrollbar customization */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col justify-between overflow-hidden antialiased select-none">
+
+  <!-- TOP APP BAR -->
+  <header class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between shrink-0 shadow-md">
+    <div class="flex items-center space-x-2">
+      <div class="bg-amber-500 text-slate-950 p-2 rounded-xl font-black text-lg flex items-center justify-center w-10 h-10 shadow-lg shadow-amber-500/20">
+        🤾
+      </div>
+      <div>
+        <h1 class="font-bold text-base leading-tight text-amber-400">Handball Alevín</h1>
+        <p class="text-xs text-slate-400">Alicante • Delegado</p>
+      </div>
+    </div>
+
+    <!-- Status Indicators -->
+    <div class="flex items-center space-x-2">
+      <span id="connection-status" class="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 font-medium">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Offline Ready
+      </span>
+      <button id="install-btn" class="hidden bg-amber-500 text-slate-950 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i> App
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="flex-1 overflow-y-auto relative p-3 sm:p-4 max-w-lg w-full mx-auto" id="app-container">
+    
+    <!-- SECTION 1: LIVE MATCH TRACKER -->
+    <section id="view-match" class="space-y-3 pb-20">
+      
+      <!-- Match Config / Header Box -->
+      <div class="bg-slate-800 rounded-2xl p-3 border border-slate-700/80 shadow-lg">
+        <div class="flex justify-between items-center text-xs text-slate-400 mb-2 border-b border-slate-700/60 pb-2">
+          <span id="match-period-label" class="font-bold text-amber-400 uppercase tracking-wider text-sm">Parte 1 de 4</span>
+          <span id="match-mode-tag" class="bg-slate-700 px-2 py-0.5 rounded text-slate-300 font-mono">4 x 10 min</span>
+        </div>
+
+        <!-- Scoreboard Display -->
+        <div class="grid grid-cols-7 items-center gap-1 my-1">
+          <!-- Home Team -->
+          <div class="col-span-3 text-center">
+            <h2 id="home-team-name" class="font-bold text-sm text-slate-200 truncate mb-1">Mi Equipo</h2>
+            <div id="home-score" class="text-5xl font-black font-mono text-emerald-400 bg-slate-900/90 py-2 rounded-xl border border-slate-700 shadow-inner">00</div>
+            <div class="flex justify-center gap-1 mt-2">
+              <button onclick="addGoal('home')" class="touch-btn bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs flex items-center gap-1 w-full justify-center shadow">
+                +1 Gol
+              </button>
+              <button onclick="addTimeout('home')" class="touch-btn bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 px-2 rounded-lg text-xs shadow">
+                TM
+              </button>
+            </div>
+          </div>
+
+          <!-- Divider & Clock -->
+          <div class="col-span-1 text-center font-bold text-slate-500 text-xl">VS</div>
+
+          <!-- Away Team -->
+          <div class="col-span-3 text-center">
+            <h2 id="away-team-name" class="font-bold text-sm text-slate-200 truncate mb-1">Rival</h2>
+            <div id="away-score" class="text-5xl font-black font-mono text-rose-400 bg-slate-900/90 py-2 rounded-xl border border-slate-700 shadow-inner">00</div>
+            <div class="flex justify-center gap-1 mt-2">
+              <button onclick="addGoal('away')" class="touch-btn bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs flex items-center gap-1 w-full justify-center shadow">
+                +1 Gol
+              </button>
+              <button onclick="addTimeout('away')" class="touch-btn bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 px-2 rounded-lg text-xs shadow">
+                TM
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timer Controls -->
+        <div class="mt-3 pt-3 border-t border-slate-700/60 flex flex-col items-center gap-2">
+          <div id="timer-display" class="text-3xl font-extrabold font-mono text-amber-300 tracking-wider">
+            10:00
+          </div>
+          <div class="flex gap-2 w-full">
+            <button id="btn-timer-start" onclick="toggleTimer()" class="touch-btn flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i> <span id="timer-btn-text">INICIAR</span>
+            </button>
+            <button onclick="nextPeriod()" class="touch-btn bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-3 py-2.5 rounded-xl text-xs flex items-center gap-1">
+              Siguiente Parte <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+            <button onclick="resetCurrentTimer()" class="touch-btn bg-slate-800 text-slate-400 hover:text-slate-200 p-2.5 rounded-xl border border-slate-700">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Player Matrix -->
+      <div class="bg-slate-800 rounded-2xl p-3 border border-slate-700/80 shadow-lg">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-xs text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="users" class="w-3.5 h-3.5 text-amber-400"></i> Registro por Jugador (Mi Equipo)
+          </h3>
+          <span class="text-[10px] text-slate-400">Toca un jugador para evento</span>
+        </div>
+
+        <div id="match-players-grid" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Live Event Log -->
+      <div class="bg-slate-800 rounded-2xl p-3 border border-slate-700/80 shadow-lg">
+        <div class="flex justify-between items-center mb-2 border-b border-slate-700/60 pb-2">
+          <h3 class="font-bold text-xs text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="list" class="w-3.5 h-3.5 text-amber-400"></i> Historial de Eventos
+          </h3>
+          <button onclick="undoLastEvent()" class="touch-btn bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+            <i data-lucide="undo-2" class="w-3 h-3"></i> Deshacer
+          </button>
+        </div>
+
+        <div id="events-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1 text-xs">
+          <p class="text-slate-500 text-center py-4 italic">No hay eventos registrados en este partido.</p>
+        </div>
+      </div>
+
+      <!-- End Match Button -->
+      <button onclick="finishMatch()" class="touch-btn w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg">
+        <i data-lucide="check-circle" class="w-5 h-5"></i> Finalizar y Guardar Partido
+      </button>
+
+    </section>
+
+    <!-- SECTION 2: ROSTER / SQUAD MANAGEMENT -->
+    <section id="view-roster" class="hidden space-y-4 pb-20">
+      
+      <!-- Team Switcher / Add Team -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+        <h2 class="font-bold text-sm text-amber-400 uppercase tracking-wider mb-3">Gestión de Plantilla</h2>
+        
+        <form id="add-player-form" onsubmit="handleAddPlayer(event)" class="space-y-3">
+          <div class="grid grid-cols-3 gap-2">
+            <input type="number" id="player-number" placeholder="Dorsal" min="1" max="99" required class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 font-mono">
+            <input type="text" id="player-name" placeholder="Nombre completo" required class="col-span-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <select id="player-position" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+              <option value="Primera Línea">Primera Línea</option>
+              <option value="Extremo">Extremo</option>
+              <option value="Pivote">Pivote</option>
+              <option value="Portero">Portero</option>
+            </select>
+            <button type="submit" class="touch-btn bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> Añadir Jugador
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Players List -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+        <h3 class="font-bold text-xs text-slate-400 uppercase tracking-wider mb-3 flex justify-between items-center">
+          <span>Jugadores Registrados</span>
+          <span id="player-count-badge" class="bg-slate-700 text-amber-400 px-2 py-0.5 rounded-full text-[10px]">0</span>
+        </h3>
+        
+        <div id="roster-list" class="space-y-2 max-h-80 overflow-y-auto">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Opponents Quick Add -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+        <h3 class="font-bold text-xs text-slate-400 uppercase tracking-wider mb-2">Equipos Rivales de Alicante</h3>
+        <div class="flex gap-2 mb-2">
+          <input type="text" id="new-opponent-name" placeholder="Nombre rival (ej. Agustinos, Elche)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+          <button onclick="addOpponent()" class="touch-btn bg-slate-700 hover:bg-slate-600 px-3 rounded-xl text-xs font-bold">Añadir</button>
+        </div>
+        <div id="opponents-chips" class="flex flex-wrap gap-1.5 mt-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SECTION 3: MATCH HISTORY & STATS -->
+    <section id="view-stats" class="hidden space-y-4 pb-20">
+      
+      <!-- Stats Summary Cards -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-center">
+          <span class="block text-[10px] text-slate-400 font-bold uppercase">Partidos</span>
+          <span id="stat-total-matches" class="text-2xl font-black text-amber-400 font-mono">0</span>
+        </div>
+        <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-center">
+          <span class="block text-[10px] text-slate-400 font-bold uppercase">Goles A Favor</span>
+          <span id="stat-total-goals" class="text-2xl font-black text-emerald-400 font-mono">0</span>
+        </div>
+        <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-center">
+          <span class="block text-[10px] text-slate-400 font-bold uppercase">Prom. Goles</span>
+          <span id="stat-avg-goals" class="text-2xl font-black text-sky-400 font-mono">0.0</span>
+        </div>
+      </div>
+
+      <!-- Top Goalscorers Table -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+        <h3 class="font-bold text-xs text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i> Tabla de Goleadores (Alevín)
+        </h3>
+        <div id="top-scorers-list" class="space-y-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Historical Match List -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+        <h3 class="font-bold text-xs text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i data-lucide="history" class="w-4 h-4 text-amber-400"></i> Histórico de Encuentros
+        </h3>
+        <div id="history-matches-list" class="space-y-2 max-h-60 overflow-y-auto">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SECTION 4: SETTINGS & BACKUP -->
+    <section id="view-settings" class="hidden space-y-4 pb-20">
+      
+      <!-- Match Format Config -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+        <h3 class="font-bold text-xs text-amber-400 uppercase tracking-wider mb-3">Configuración Partido Activo</h3>
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Rival para el partido actual:</label>
+            <select id="config-opponent-select" onchange="changeActiveOpponent(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Formato de Tiempo (Reglamento Alevín):</label>
+            <select id="config-format-select" onchange="changeMatchFormat(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none">
+              <option value="4x10">4 Partes de 10 minutos (Estándar RFEB)</option>
+              <option value="2x20">2 Partes de 20 minutos</option>
+              <option value="4x8">4 Partes de 8 minutos</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Backup & Offline Persistence -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 space-y-3">
+        <h3 class="font-bold text-xs text-amber-400 uppercase tracking-wider">Copias de Seguridad (100% Offline)</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Guarda o restaura tus datos directamente en el almacenamiento de tu móvil sin necesidad de conexión a internet.
+        </p>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button onclick="exportDataJSON()" class="touch-btn bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-600">
+            <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i> Exportar JSON
+          </button>
+          
+          <label class="touch-btn bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-600 cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4 text-sky-400"></i> Importar JSON
+            <input type="file" id="import-file" accept=".json" onchange="importDataJSON(event)" class="hidden">
+          </label>
+        </div>
+
+        <button onclick="confirmResetAllData()" class="touch-btn w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1 mt-4">
+          <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar Todos los Datos de la App
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL FOR PLAYER QUICK ACTIONS -->
+  <div id="player-action-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <div>
+          <h3 id="modal-player-name" class="font-bold text-lg text-white">#00 Nombre Jugador</h3>
+          <p id="modal-player-pos" class="text-xs text-amber-400">Posición</p>
+        </div>
+        <button onclick="closePlayerModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <!-- Action Buttons Grid -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="recordPlayerEvent('Gol')" class="touch-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3 rounded-2xl flex items-center gap-2 justify-center shadow">
+          <span class="text-xl">⚽</span> +1 Gol
+        </button>
+        <button onclick="recordPlayerEvent('Parada/Malla')" class="touch-btn bg-sky-600 hover:bg-sky-500 text-white font-bold p-3 rounded-2xl flex items-center gap-2 justify-center shadow">
+          <span class="text-xl">🧤</span> Parada / Malla
+        </button>
+        <button onclick="recordPlayerEvent('Tarjeta Amarilla')" class="touch-btn bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-3 rounded-2xl flex items-center gap-2 justify-center shadow">
+          <span class="text-xl">🟨</span> T. Amarilla
+        </button>
+        <button onclick="recordPlayerEvent('2 Min Exclusión')" class="touch-btn bg-orange-600 hover:bg-orange-500 text-white font-bold p-3 rounded-2xl flex items-center gap-2 justify-center shadow">
+          <span class="text-xl">✌️</span> 2 Min Exclusión
+        </button>
+        <button onclick="recordPlayerEvent('Tarjeta Roja')" class="touch-btn bg-rose-600 hover:bg-rose-500 text-white font-bold p-3 rounded-2xl flex items-center gap-2 justify-center shadow col-span-2">
+          <span class="text-xl">🟥</span> Tarjeta Roja
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="bg-slate-800/95 backdrop-blur border-t border-slate-700 fixed bottom-0 left-0 right-0 z-40">
+    <div class="max-w-lg mx-auto grid grid-cols-4 px-2 py-1.5">
+      
+      <button onclick="switchTab('match')" id="nav-match" class="nav-item flex flex-col items-center py-1 text-amber-400">
+        <i data-lucide="circle-dot" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium mt-0.5">Partido</span>
+      </button>
+
+      <button onclick="switchTab('roster')" id="nav-roster" class="nav-item flex flex-col items-center py-1 text-slate-400 hover:text-slate-200">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium mt-0.5">Plantilla</span>
+      </button>
+
+      <button onclick="switchTab('stats')" id="nav-stats" class="nav-item flex flex-col items-center py-1 text-slate-400 hover:text-slate-200">
+        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium mt-0.5">Stats</span>
+      </button>
+
+      <button onclick="switchTab('settings')" id="nav-settings" class="nav-item flex flex-col items-center py-1 text-slate-400 hover:text-slate-200">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium mt-0.5">Ajustes</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    /* ==========================================================================
+       1. INITIALIZATION & STATE MANAGEMENT
+       ========================================================================== */
+    const STORAGE_KEY = 'alevin_handball_data_v1';
+
+    // Default Application State
+    let appState = {
+      myTeamName: 'C.D. Alicante Alevín',
+      opponents: ['CB Agustinos Alicante', 'BM Elche', 'BM Petrer', 'BM San Juan'],
+      activeOpponent: 'CB Agustinos Alicante',
+      format: '4x10', // '4x10', '2x20', '4x8'
+      players: [
+        { id: '1', number: 1, name: 'Lucas Mateo', position: 'Portero' },
+        { id: '2', number: 7, name: 'Alex García', position: 'Primera Línea' },
+        { id: '3', number: 10, name: 'Hugo López', position: 'Extremo' },
+        { id: '4', number: 14, name: 'Marc Pérez', position: 'Pivote' }
+      ],
+      currentMatch: null,
+      history: []
+    };
+
+    // Live Match Timer Variables
+    let timerInterval = null;
+    let timerRunning = false;
+    let selectedPlayerForAction = null;
+
+    /* ==========================================================================
+       2. LIFECYCLE & STORAGE HELPERS
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStateFromStorage();
+      setupPWA();
+      initCurrentMatchIfNeeded();
+      renderAllViews();
+      lucide.createIcons();
+      updateOnlineStatus();
+
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+    });
+
+    function saveStateToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Error guardando en LocalStorage:', e);
+      }
+    }
+
+    function loadStateFromStorage() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          appState = { ...appState, ...JSON.parse(saved) };
+        } catch (e) {
+          console.error('Error leyendo LocalStorage:', e);
+        }
+      }
+    }
+
+    function updateOnlineStatus() {
+      const statusEl = document.getElementById('connection-status');
+      if (navigator.onLine) {
+        statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Listo Offline`;
+      } else {
+        statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Modo Offline`;
+      }
+    }
+
+    /* ==========================================================================
+       3. MATCH MANAGEMENT & TIMER LOGIC
+       ========================================================================== */
+    function getPeriodMaxSeconds() {
+      if (appState.format === '4x10') return 10 * 60;
+      if (appState.format === '2x20') return 20 * 60;
+      if (appState.format === '4x8') return 8 * 60;
+      return 10 * 60;
+    }
+
+    function getMaxPeriods() {
+      return appState.format.startsWith('4') ? 4 : 2;
+    }
+
+    function initCurrentMatchIfNeeded() {
+      if (!appState.currentMatch) {
+        appState.currentMatch = {
+          id: Date.now().toString(),
+          date: new Date().toISOString().split('T')[0],
+          opponent: appState.activeOpponent || appState.opponents[0] || 'Rival Alicante',
+          homeScore: 0,
+          awayScore: 0,
+          currentPeriod: 1,
+          secondsRemaining: getPeriodMaxSeconds(),
+          events: []
+        };
+        saveStateToStorage();
+      }
+    }
+
+    function toggleTimer() {
+      if (timerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+      document.getElementById('timer-btn-text').innerText = 'PAUSAR';
+      
+      timerInterval = setInterval(() => {
+        if (appState.currentMatch.secondsRemaining > 0) {
+          appState.currentMatch.secondsRemaining--;
+          updateTimerDisplay();
+        } else {
+          pauseTimer();
+          alert(`¡Fin de la Parte ${appState.currentMatch.currentPeriod}!`);
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      timerRunning = false;
+      clearInterval(timerInterval);
+      document.getElementById('timer-btn-text').innerText = 'REANUDAR';
+    }
+
+    function resetCurrentTimer() {
+      pauseTimer();
+      appState.currentMatch.secondsRemaining = getPeriodMaxSeconds();
+      updateTimerDisplay();
+      saveStateToStorage();
+    }
+
+    function nextPeriod() {
+      pauseTimer();
+      const maxP = getMaxPeriods();
+      if (appState.currentMatch.currentPeriod < maxP) {
+        appState.currentMatch.currentPeriod++;
+        appState.currentMatch.secondsRemaining = getPeriodMaxSeconds();
+        updateMatchHeaderUI();
+        updateTimerDisplay();
+        saveStateToStorage();
+      } else {
+        alert('Ya estás en la última parte del partido.');
+      }
+    }
+
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60).toString().padStart(2, '0');
+      const s = (secs % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateTimerDisplay() {
+      const el = document.getElementById('timer-display');
+      if (el) el.innerText = formatTime(appState.currentMatch.secondsRemaining);
+    }
+
+    /* ==========================================================================
+       4. EVENT REGISTRATION (GOALS, TIMEOUTS, CARDS)
+       ========================================================================== */
+    function addGoal(team) {
+      if (team === 'home') {
+        appState.currentMatch.homeScore++;
+        logEvent(`Gol de Mi Equipo (${appState.currentMatch.homeScore}-${appState.currentMatch.awayScore})`);
+      } else {
+        appState.currentMatch.awayScore++;
+        logEvent(`Gol de ${appState.currentMatch.opponent} (${appState.currentMatch.homeScore}-${appState.currentMatch.awayScore})`);
+      }
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    function addTimeout(team) {
+      const teamName = team === 'home' ? 'Mi Equipo' : appState.currentMatch.opponent;
+      logEvent(`Tiempo Muerto (${teamName})`);
+      pauseTimer();
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    function openPlayerModal(playerId) {
+      const player = appState.players.find(p => p.id === playerId);
+      if (!player) return;
+      selectedPlayerForAction = player;
+
+      document.getElementById('modal-player-name').innerText = `#${player.number} ${player.name}`;
+      document.getElementById('modal-player-pos').innerText = player.position;
+      document.getElementById('player-action-modal').classList.remove('hidden');
+    }
+
+    function closePlayerModal() {
+      document.getElementById('player-action-modal').classList.add('hidden');
+      selectedPlayerForAction = null;
+    }
+
+    function recordPlayerEvent(type) {
+      if (!selectedPlayerForAction) return;
+
+      const player = selectedPlayerForAction;
+      if (type === 'Gol') {
+        appState.currentMatch.homeScore++;
+      }
+
+      logEvent(`${type} - #${player.number} ${player.name}`, player.id, type);
+      closePlayerModal();
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    function logEvent(desc, playerId = null, type = null) {
+      const ev = {
+        id: Date.now().toString(),
+        timestamp: formatTime(getPeriodMaxSeconds() - appState.currentMatch.secondsRemaining),
+        period: appState.currentMatch.currentPeriod,
+        description: desc,
+        playerId: playerId,
+        type: type
+      };
+      appState.currentMatch.events.unshift(ev);
+    }
+
+    function undoLastEvent() {
+      if (!appState.currentMatch.events.length) return;
+      const last = appState.currentMatch.events.shift();
+
+      if (last.type === 'Gol') {
+        if (appState.currentMatch.homeScore > 0) appState.currentMatch.homeScore--;
+      } else if (last.description.startsWith('Gol de Mi Equipo')) {
+        if (appState.currentMatch.homeScore > 0) appState.currentMatch.homeScore--;
+      } else if (last.description.startsWith('Gol de')) {
+        if (appState.currentMatch.awayScore > 0) appState.currentMatch.awayScore--;
+      }
+
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    function finishMatch() {
+      if (!confirm('¿Deseas finalizar y guardar este partido en el historial?')) return;
+
+      pauseTimer();
+      appState.history.unshift({ ...appState.currentMatch, finishedAt: new Date().toISOString() });
+      
+      // Reset current match
+      appState.currentMatch = null;
+      initCurrentMatchIfNeeded();
+      
+      renderAllViews();
+      switchTab('stats');
+      saveStateToStorage();
+    }
+
+    /* ==========================================================================
+       5. ROSTER & OPPONENTS LOGIC
+       ========================================================================== */
+    function handleAddPlayer(e) {
+      e.preventDefault();
+      const num = parseInt(document.getElementById('player-number').value);
+      const name = document.getElementById('player-name').value.trim();
+      const pos = document.getElementById('player-position').value;
+
+      if (!name || isNaN(num)) return;
+
+      appState.players.push({
+        id: Date.now().toString(),
+        number: num,
+        name: name,
+        position: pos
+      });
+
+      // Sort players by number
+      appState.players.sort((a, b) => a.number - b.number);
+
+      document.getElementById('add-player-form').reset();
+      renderRosterView();
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    function deletePlayer(id) {
+      if (!confirm('¿Eliminar jugador de la plantilla?')) return;
+      appState.players = appState.players.filter(p => p.id !== id);
+      renderRosterView();
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    function addOpponent() {
+      const input = document.getElementById('new-opponent-name');
+      const val = input.value.trim();
+      if (val && !appState.opponents.includes(val)) {
+        appState.opponents.push(val);
+        input.value = '';
+        renderRosterView();
+        renderSettingsView();
+        saveStateToStorage();
+      }
+    }
+
+    function changeActiveOpponent(val) {
+      appState.activeOpponent = val;
+      if (appState.currentMatch) {
+        appState.currentMatch.opponent = val;
+      }
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    function changeMatchFormat(val) {
+      appState.format = val;
+      if (appState.currentMatch) {
+        appState.currentMatch.secondsRemaining = getPeriodMaxSeconds();
+      }
+      renderMatchView();
+      saveStateToStorage();
+    }
+
+    /* ==========================================================================
+       6. UI RENDERING FUNCTIONS
+       ========================================================================== */
+    function renderAllViews() {
+      renderMatchView();
+      renderRosterView();
+      renderStatsView();
+      renderSettingsView();
+    }
+
+    function renderMatchView() {
+      if (!appState.currentMatch) return;
+
+      // Scores & Names
+      document.getElementById('home-score').innerText = String(appState.currentMatch.homeScore).padStart(2, '0');
+      document.getElementById('away-score').innerText = String(appState.currentMatch.awayScore).padStart(2, '0');
+      document.getElementById('home-team-name').innerText = appState.myTeamName;
+      document.getElementById('away-team-name').innerText = appState.currentMatch.opponent;
+
+      // Header Labels
+      updateMatchHeaderUI();
+      updateTimerDisplay();
+
+      // Quick Player Matrix
+      const grid = document.getElementById('match-players-grid');
+      grid.innerHTML = '';
+
+      if (appState.players.length === 0) {
+        grid.innerHTML = `<p class="col-span-2 text-xs text-slate-500 py-2 text-center">Añade jugadores en la pestaña "Plantilla"</p>`;
+      } else {
+        appState.players.forEach(p => {
+          const btn = document.createElement('button');
+          btn.className = 'touch-btn bg-slate-900/80 hover:bg-slate-700 p-2 rounded-xl border border-slate-700/60 text-left flex items-center justify-between shadow-sm';
+          btn.onclick = () => openPlayerModal(p.id);
+          btn.innerHTML = `
+            <div class="truncate">
+              <span class="font-mono font-bold text-amber-400 text-xs">#${p.number}</span>
+              <span class="text-xs font-semibold text-slate-200 ml-1 truncate">${p.name}</span>
+            </div>
+            <span class="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">${p.position.substring(0,3)}</span>
+          `;
+          grid.appendChild(btn);
+        });
+      }
+
+      // Event Log
+      const log = document.getElementById('events-list');
+      log.innerHTML = '';
+      if (!appState.currentMatch.events.length) {
+        log.innerHTML = `<p class="text-slate-500 text-center py-4 italic">No hay eventos registrados en este partido.</p>`;
+      } else {
+        appState.currentMatch.events.forEach(ev => {
+          const item = document.createElement('div');
+          item.className = 'flex items-center justify-between bg-slate-900/60 px-2.5 py-1.5 rounded-lg border border-slate-700/40';
+          item.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-[10px] text-amber-400 bg-slate-800 px-1 py-0.5 rounded">P${ev.period} ${ev.timestamp}</span>
+              <span class="text-slate-200 font-medium text-xs">${ev.description}</span>
+            </div>
+          `;
+          log.appendChild(item);
+        });
+      }
+    }
+
+    function updateMatchHeaderUI() {
+      const maxP = getMaxPeriods();
+      document.getElementById('match-period-label').innerText = `Parte ${appState.currentMatch.currentPeriod} de ${maxP}`;
+      document.getElementById('match-mode-tag').innerText = appState.format === '4x10' ? '4x10 min' : (appState.format === '2x20' ? '2x20 min' : '4x8 min');
+    }
+
+    function renderRosterView() {
+      const rosterList = document.getElementById('roster-list');
+      rosterList.innerHTML = '';
+
+      document.getElementById('player-count-badge').innerText = appState.players.length;
+
+      if (!appState.players.length) {
+        rosterList.innerHTML = `<p class="text-slate-500 text-xs text-center py-4">No hay jugadores registrados.</p>`;
+      } else {
+        appState.players.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'flex items-center justify-between bg-slate-900 p-2.5 rounded-xl border border-slate-700';
+          div.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-mono font-bold flex items-center justify-center text-xs">
+                ${p.number}
+              </span>
+              <div>
+                <p class="text-xs font-bold text-white">${p.name}</p>
+                <p class="text-[10px] text-slate-400">${p.position}</p>
+              </div>
+            </div>
+            <button onclick="deletePlayer('${p.id}')" class="text-slate-500 hover:text-rose-400 p-1.5">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          `;
+          rosterList.appendChild(div);
+        });
+      }
+
+      // Opponents Chips
+      const chips = document.getElementById('opponents-chips');
+      chips.innerHTML = '';
+      appState.opponents.forEach(opp => {
+        const chip = document.createElement('span');
+        chip.className = 'bg-slate-900 text-slate-300 text-xs px-2.5 py-1 rounded-lg border border-slate-700 flex items-center gap-1';
+        chip.innerText = opp;
+        chips.appendChild(chip);
+      });
+
+      lucide.createIcons();
+    }
+
+    function renderStatsView() {
+      const totalMatches = appState.history.length;
+      let totalGoals = 0;
+
+      // Player stats map
+      const playerStatsMap = {};
+      appState.players.forEach(p => {
+        playerStatsMap[p.id] = { name: p.name, number: p.number, goals: 0, cards: 0 };
+      });
+
+      appState.history.forEach(m => {
+        totalGoals += m.homeScore;
+        m.events.forEach(ev => {
+          if (ev.playerId && playerStatsMap[ev.playerId]) {
+            if (ev.type === 'Gol') playerStatsMap[ev.playerId].goals++;
+            if (ev.type && ev.type.includes('Tarjeta') || ev.type.includes('Exclusión')) {
+              playerStatsMap[ev.playerId].cards++;
+            }
+          }
+        });
+      });
+
+      document.getElementById('stat-total-matches').innerText = totalMatches;
+      document.getElementById('stat-total-goals').innerText = totalGoals;
+      document.getElementById('stat-avg-goals').innerText = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(1) : '0.0';
+
+      // Top Scorers
+      const scorersList = document.getElementById('top-scorers-list');
+      scorersList.innerHTML = '';
+
+      const sortedPlayers = Object.values(playerStatsMap).sort((a, b) => b.goals - a.goals);
+
+      if (!sortedPlayers.length) {
+        scorersList.innerHTML = `<p class="text-slate-500 text-xs text-center py-2">Sin estadísticas aún.</p>`;
+      } else {
+        sortedPlayers.forEach(p => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between bg-slate-900 p-2 rounded-xl border border-slate-700/60 text-xs';
+          row.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-amber-400 w-5">#${p.number}</span>
+              <span class="text-slate-200 font-semibold">${p.name}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-slate-400 text-[10px]">Sanciones: ${p.cards}</span>
+              <span class="bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-lg border border-emerald-500/30">${p.goals} goles</span>
+            </div>
+          `;
+          scorersList.appendChild(row);
+        });
+      }
+
+      // History List
+      const historyList = document.getElementById('history-matches-list');
+      historyList.innerHTML = '';
+
+      if (!appState.history.length) {
+        historyList.innerHTML = `<p class="text-slate-500 text-xs text-center py-4">No hay partidos finalizados guardados.</p>`;
+      } else {
+        appState.history.forEach(m => {
+          const item = document.createElement('div');
+          item.className = 'bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center';
+          item.innerHTML = `
+            <div>
+              <p class="text-xs font-bold text-white">${appState.myTeamName} vs ${m.opponent}</p>
+              <p class="text-[10px] text-slate-400">${m.date}</p>
+            </div>
+            <div class="font-mono text-base font-black ${m.homeScore >= m.awayScore ? 'text-emerald-400' : 'text-rose-400'}">
+              ${m.homeScore} - ${m.awayScore}
+            </div>
+          `;
+          historyList.appendChild(item);
+        });
+      }
+    }
+
+    function renderSettingsView() {
+      const sel = document.getElementById('config-opponent-select');
+      sel.innerHTML = '';
+      appState.opponents.forEach(opp => {
+        const opt = document.createElement('option');
+        opt.value = opp;
+        opt.innerText = opp;
+        if (appState.currentMatch && appState.currentMatch.opponent === opp) {
+          opt.selected = true;
+        }
+        sel.appendChild(opt);
+      });
+
+      document.getElementById('config-format-select').value = appState.format;
+    }
+
+    /* ==========================================================================
+       7. NAVIGATION & TAB SWITCHING
+       ========================================================================== */
+    function switchTab(tab) {
+      const views = ['match', 'roster', 'stats', 'settings'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        const nav = document.getElementById(`nav-${v}`);
+        if (v === tab) {
+          el.classList.remove('hidden');
+          nav.className = 'nav-item flex flex-col items-center py-1 text-amber-400';
+        } else {
+          el.classList.add('hidden');
+          nav.className = 'nav-item flex flex-col items-center py-1 text-slate-400 hover:text-slate-200';
+        }
+      });
+      lucide.createIcons();
+    }
+
+    /* ==========================================================================
+       8. JSON BACKUP & RESTORE
+       ========================================================================== */
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `handball_alevin_alicante_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importDataJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.players && imported.opponents) {
+            appState = imported;
+            saveStateToStorage();
+            renderAllViews();
+            alert('¡Datos importados con éxito!');
+          } else {
+            alert('El archivo JSON no tiene un formato válido de esta aplicación.');
+          }
+        } catch (err) {
+          alert('Error al leer el archivo JSON.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmResetAllData() {
+      if (confirm('¿ATENCIÓN: Se borrarán todos los jugadores, partidos y configuraciones localmente?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    /* ==========================================================================
+       9. PWA MANIFEST & INSTALL PROMPT
+       ========================================================================== */
+    function setupPWA() {
+      // Dynamic Manifest Construction for 100% Single File Offline Execution
+      const manifest = {
+        name: "Handball Alevín Alicante",
+        short_name: "Handball",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#0f172a",
+        theme_color: "#0f172a",
+        icons: [
+          {
+            src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23f59e0b'/><text x='50' y='65' font-size='50' text-anchor='middle'>🤾</text></svg>",
+            sizes: "192x192",
+            type: "image/svg+xml"
+          }
+        ]
+      };
+      const stringManifest = JSON.stringify(manifest);
+      const blob = new Blob([stringManifest], {type: 'application/json'});
+      const manifestURL = URL.createObjectURL(blob);
+      document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+
+      // PWA Installation prompt catcher
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const installBtn = document.getElementById('install-btn');
+        installBtn.classList.remove('hidden');
+        installBtn.addEventListener('click', () => {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              installBtn.classList.add('hidden');
+            }
+            deferredPrompt = null;
+          });
+        });
+      });
+    }
+  </script>
+</body>
+</html>
